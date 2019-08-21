@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=\, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+      integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+      integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+      crossorigin=""
+    ></script>
+		<script
+		  src="https://code.jquery.com/jquery-3.4.1.min.js"
+		  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+		  crossorigin="anonymous"></script>
+
+    <style>
+      #map {
+        height: 400px;
+      }
+      .depremMarker {
+        background-color: transparent;
+        border: none;
+
+      }
+
+      .markerTitle{
+        background-color:white;
+        color: #000;
+        word-wrap: none;
+        text-align: center;
+      }
+    </style>
+
+    <title>Leaflet - Türkiye Son Depremler</title>
+  </head>
+  <body>
+    <h1>Leaflet - Türkiye Son Depremler</h1>
+
+
+    <div id="map"></div>
+
+    <script>
+      // Making a map and tiles
+      // Setting a higher initial zoom to make effect more obvious
+      const mymap = L.map('map').setView([0, 0], 1);
+      const attribution =
+        '&copy; <a href="https://www.sezercoban.com">www.sezercoban.com</a> LeafLet Demo';
+
+      const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const tiles = L.tileLayer(tileUrl, { attribution });
+      tiles.addTo(mymap);
+      var layerGroup = L.layerGroup().addTo(mymap);
+
+
+      mymap.setView([39, 34.90], 6); 
+
+      //verilerin cekilecegi adres
+      const api_url = 'https://www.sezercoban.com/api/deprem/index.php';
+
+      async function getDepremler() {
+        console.log("Depremler listesi getiriliyor..");
+        const response = await fetch(api_url); //adrese git
+        const data = await response.json();//adresteki content'i json olarak al.
+        deletedepremler(); //harita üzerindeki markerları si
+        for (var i = 0 ; i < 20; i++) {//gelen verilerden 20 tanesini yaz
+          var d = data[i];
+          var lon = d.lon;
+          var lat = d.lat;
+          var time = d.time;
+          var mag = d.m;
+
+
+          var location = d.city + " " + d.district ;
+          
+          var other = d.other;
+
+          var name = location.trim().length > 3 ? location : other ;
+          //console.log(i + " : " + time +  " -- "+ long + " - "+ lat);
+
+          //yeni marker oluşturmak için ayarları yap
+            const MarkerIcon = L.divIcon({
+              iconSize: [100, 50],
+               iconAnchor: [50, 50],
+              html : '<div class="markerTitle"><strong>'+mag+'</strong> - '+name+'</div><div style="text-align:center; width:100%;"><img src="pointer.png" /></div>',
+              className: 'depremMarker',
+            });
+
+            //marker'i ekle
+          let marker = L.marker([lat, lon], { icon: MarkerIcon ,title: name }).addTo(layerGroup);
+        }
+
+    
+        console.log("Markerlar oluşturuldu.");
+      }
+
+      getDepremler();
+
+      function deletedepremler () {
+        layerGroup.clearLayers();
+        console.log("Markerlar temizlendi.");
+      }
+
+      setInterval(getDepremler, 5000);
+
+
+    </script>
+  </body>
+</html>
